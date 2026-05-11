@@ -8,6 +8,8 @@ public class AiMentorBeApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(AiMentorBeApplication.class, args);
+        System.out.println("🚀 IRSS API is running successfully!");
     }
+
 
 }
