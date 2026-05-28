@@ -13,7 +13,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.sql.Timestamp;
 import java.util.Collections;
 
@@ -24,6 +24,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Value("${google.client.id}")
     private String googleClientId;
@@ -90,5 +92,143 @@ public class AuthService {
                 .fullName(user.getFullName())
                 .role(user.getRole().getRoleName())
                 .build();
+    }
+    public AuthResponse loginAdmin(
+            String email,
+            String password
+    ) {
+
+        String defaultAdminPassword = "123456@aimentor";
+
+        User user = userRepository.findByEmail(email)
+                .orElse(null);
+
+        // nếu chưa tồn tại => tạo admin mới
+        if (user == null) {
+
+            if (!password.equals(defaultAdminPassword)) {
+                throw new RuntimeException("Wrong default admin password");
+            }
+
+            Role adminRole = roleRepository
+                    .findByRoleName("ADMIN")
+                    .orElseThrow(() ->
+                            new RuntimeException("ADMIN role not found")
+                    );
+
+            user = User.builder()
+                    .email(email)
+                    .fullName("Administrator")
+                    .passwordHash(
+                            passwordEncoder.encode(defaultAdminPassword)
+                    )
+                    .isActive(true)
+                    .createdAt(
+                            new Timestamp(System.currentTimeMillis())
+                    )
+                    .role(adminRole)
+                    .build();
+
+            userRepository.save(user);
+        }
+
+        // kiểm tra password đã mã hóa
+        boolean isMatch = passwordEncoder.matches(
+                password,
+                user.getPasswordHash()
+        );
+
+        if (!isMatch) {
+            throw new RuntimeException("Wrong password");
+        }
+
+        String jwt = jwtService.generateToken(user.getEmail());
+
+        return AuthResponse.builder()
+                .token(jwt)
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().getRoleName())
+                .build();
+    }
+    public void changePassword(
+            String email,
+            String oldPassword,
+            String newPassword
+    ) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        boolean isMatch = passwordEncoder.matches(
+                oldPassword,
+                user.getPasswordHash()
+        );
+
+        if (!isMatch) {
+            throw new RuntimeException("Old password incorrect");
+        }
+
+        user.setPasswordHash(
+                passwordEncoder.encode(newPassword)
+        );
+
+        userRepository.save(user);
+    }
+    public void forgotPassword(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        String token = java.util.UUID.randomUUID().toString();
+
+        user.setResetToken(token);
+
+        user.setResetTokenExpiry(
+                new Timestamp(
+                        System.currentTimeMillis()
+                                + 15 * 60 * 1000
+                )
+        );
+
+        userRepository.save(user);
+
+        String resetLink =
+                "http://localhost:5173/reset-password?token="
+                        + token;
+
+        emailService.sendResetPasswordEmail(
+                email,
+                resetLink
+        );
+    }
+    public void resetPassword(
+            String token,
+            String newPassword
+    ) {
+
+        User user = userRepository.findByResetToken(token)
+                .orElseThrow(() ->
+                        new RuntimeException("Invalid token")
+                );
+
+        if (user.getResetTokenExpiry()
+                .before(new Timestamp(System.currentTimeMillis()))) {
+
+            throw new RuntimeException("Token expired");
+        }
+
+        user.setPasswordHash(
+                passwordEncoder.encode(newPassword)
+        );
+
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+
+        userRepository.save(user);
     }
 }
