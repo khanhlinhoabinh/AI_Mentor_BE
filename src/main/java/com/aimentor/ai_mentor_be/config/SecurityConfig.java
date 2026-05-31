@@ -18,7 +18,8 @@ import java.util.List;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
 
         http
                 .cors(Customizer.withDefaults())
@@ -27,10 +28,9 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/subjects/**").permitAll()
                         .anyRequest().authenticated()
-                )
-
-                .httpBasic(Customizer.withDefaults());
+                );
 
         return http.build();
     }

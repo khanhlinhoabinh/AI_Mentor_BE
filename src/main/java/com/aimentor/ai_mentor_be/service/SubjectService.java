@@ -1,0 +1,67 @@
+package com.aimentor.ai_mentor_be.service;
+
+import com.aimentor.ai_mentor_be.dto.CreateSubjectRequest;
+import com.aimentor.ai_mentor_be.dto.SubjectResponse;
+import com.aimentor.ai_mentor_be.entity.Subject;
+import com.aimentor.ai_mentor_be.entity.User;
+import com.aimentor.ai_mentor_be.repository.SubjectRepository;
+import com.aimentor.ai_mentor_be.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class SubjectService {
+
+    private final SubjectRepository subjectRepository;
+
+    private final UserRepository userRepository;
+
+    // CREATE SUBJECT
+    public SubjectResponse createSubject(UUID userId,
+                                         CreateSubjectRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        Subject subject = Subject.builder()
+                .user(user)
+                .subjectName(request.getSubjectName())
+                .description(request.getDescription())
+                .createdAt(new Timestamp(System.currentTimeMillis()))
+                .updatedAt(new Timestamp(System.currentTimeMillis()))
+                .build();
+
+        Subject savedSubject = subjectRepository.save(subject);
+
+        return mapToResponse(savedSubject);
+    }
+
+    // GET SUBJECTS
+    public List<SubjectResponse> getSubjectsByUser(UUID userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        return subjectRepository.findByUser(user)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private SubjectResponse mapToResponse(Subject subject) {
+
+        return SubjectResponse.builder()
+                .subjectId(subject.getSubjectId())
+                .subjectName(subject.getSubjectName())
+                .description(subject.getDescription())
+                .createdAt(subject.getCreatedAt())
+                .build();
+    }
+}
