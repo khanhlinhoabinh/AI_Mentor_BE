@@ -2,6 +2,7 @@ package com.aimentor.ai_mentor_be.controller;
 
 import com.aimentor.ai_mentor_be.dto.CreateSubjectRequest;
 import com.aimentor.ai_mentor_be.dto.SubjectResponse;
+import com.aimentor.ai_mentor_be.dto.UpdateSubjectRequest;
 import com.aimentor.ai_mentor_be.service.SubjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,10 @@ public class SubjectController {
     ) {
 
         return ResponseEntity.ok(
-                subjectService.createSubject(userId, request)
+                subjectService.createSubject(
+                        userId,
+                        request
+                )
         );
     }
 
@@ -36,7 +40,43 @@ public class SubjectController {
     ) {
 
         return ResponseEntity.ok(
-                subjectService.getSubjectsByUser(userId)
+                subjectService.getSubjectsByUser(
+                        userId
+                )
+        );
+    }
+
+    // UPDATE SUBJECT
+    @PutMapping("/{subjectId}")
+    public ResponseEntity<SubjectResponse> updateSubject(
+            @RequestHeader("userId") UUID userId,
+            @PathVariable Long subjectId,
+            @RequestBody UpdateSubjectRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                subjectService.updateSubject(
+                        userId,
+                        subjectId,
+                        request
+                )
+        );
+    }
+
+    // DELETE SUBJECT
+    @DeleteMapping("/{subjectId}")
+    public ResponseEntity<String> deleteSubject(
+            @RequestHeader("userId") UUID userId,
+            @PathVariable Long subjectId
+    ) {
+
+        subjectService.deleteSubject(
+                userId,
+                subjectId
+        );
+
+        return ResponseEntity.ok(
+                "Delete subject successfully"
         );
     }
 }
