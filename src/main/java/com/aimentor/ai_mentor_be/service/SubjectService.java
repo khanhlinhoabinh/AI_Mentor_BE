@@ -2,6 +2,7 @@ package com.aimentor.ai_mentor_be.service;
 
 import com.aimentor.ai_mentor_be.dto.CreateSubjectRequest;
 import com.aimentor.ai_mentor_be.dto.SubjectResponse;
+import com.aimentor.ai_mentor_be.dto.UpdateSubjectRequest;
 import com.aimentor.ai_mentor_be.entity.Subject;
 import com.aimentor.ai_mentor_be.entity.User;
 import com.aimentor.ai_mentor_be.repository.SubjectRepository;
@@ -22,8 +23,10 @@ public class SubjectService {
     private final UserRepository userRepository;
 
     // CREATE SUBJECT
-    public SubjectResponse createSubject(UUID userId,
-                                         CreateSubjectRequest request) {
+    public SubjectResponse createSubject(
+            UUID userId,
+            CreateSubjectRequest request
+    ) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
@@ -55,7 +58,60 @@ public class SubjectService {
                 .toList();
     }
 
-    private SubjectResponse mapToResponse(Subject subject) {
+    // UPDATE SUBJECT
+    public SubjectResponse updateSubject(
+            UUID userId,
+            Long subjectId,
+            UpdateSubjectRequest request
+    ) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() ->
+                        new RuntimeException("Subject not found"));
+
+        if (!subject.getUser().getUserId().equals(user.getUserId())) {
+            throw new RuntimeException("You do not have permission");
+        }
+
+        subject.setSubjectName(request.getSubjectName());
+        subject.setDescription(request.getDescription());
+        subject.setUpdatedAt(
+                new Timestamp(System.currentTimeMillis())
+        );
+
+        Subject updatedSubject = subjectRepository.save(subject);
+
+        return mapToResponse(updatedSubject);
+    }
+
+    // DELETE SUBJECT
+    public void deleteSubject(
+            UUID userId,
+            Long subjectId
+    ) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() ->
+                        new RuntimeException("Subject not found"));
+
+        if (!subject.getUser().getUserId().equals(user.getUserId())) {
+            throw new RuntimeException("You do not have permission");
+        }
+
+        subjectRepository.delete(subject);
+    }
+
+    private SubjectResponse mapToResponse(
+            Subject subject
+    ) {
 
         return SubjectResponse.builder()
                 .subjectId(subject.getSubjectId())
