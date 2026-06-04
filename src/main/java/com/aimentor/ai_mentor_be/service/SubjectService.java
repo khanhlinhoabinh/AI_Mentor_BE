@@ -45,7 +45,7 @@ public class SubjectService {
         return mapToResponse(savedSubject);
     }
 
-    // GET SUBJECTS
+    // GET ALL SUBJECTS
     public List<SubjectResponse> getSubjectsByUser(UUID userId) {
 
         User user = userRepository.findById(userId)
@@ -56,6 +56,27 @@ public class SubjectService {
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    // GET SUBJECT DETAIL
+    public SubjectResponse getSubjectDetail(
+            UUID userId,
+            Long subjectId
+    ) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() ->
+                        new RuntimeException("Subject not found"));
+
+        if (!subject.getUser().getUserId().equals(user.getUserId())) {
+            throw new RuntimeException("You do not have permission");
+        }
+
+        return mapToResponse(subject);
     }
 
     // UPDATE SUBJECT
@@ -118,6 +139,7 @@ public class SubjectService {
                 .subjectName(subject.getSubjectName())
                 .description(subject.getDescription())
                 .createdAt(subject.getCreatedAt())
+                .updatedAt(subject.getUpdatedAt()) // bỏ dòng này nếu DTO chưa có field updatedAt
                 .build();
     }
 }

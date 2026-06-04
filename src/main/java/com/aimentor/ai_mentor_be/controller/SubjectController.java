@@ -33,7 +33,7 @@ public class SubjectController {
         );
     }
 
-    // GET SUBJECTS
+    // GET ALL SUBJECTS
     @GetMapping
     public ResponseEntity<List<SubjectResponse>> getSubjects(
             @RequestHeader("userId") UUID userId
@@ -42,6 +42,21 @@ public class SubjectController {
         return ResponseEntity.ok(
                 subjectService.getSubjectsByUser(
                         userId
+                )
+        );
+    }
+
+    // GET SUBJECT DETAIL
+    @GetMapping("/{subjectId}")
+    public ResponseEntity<SubjectResponse> getSubjectDetail(
+            @RequestHeader("userId") UUID userId,
+            @PathVariable Long subjectId
+    ) {
+
+        return ResponseEntity.ok(
+                subjectService.getSubjectDetail(
+                        userId,
+                        subjectId
                 )
         );
     }

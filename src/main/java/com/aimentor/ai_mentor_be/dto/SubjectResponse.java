@@ -17,4 +17,6 @@ public class SubjectResponse {
 
     private Timestamp createdAt;
 
+    private Timestamp updatedAt;
+
 }
