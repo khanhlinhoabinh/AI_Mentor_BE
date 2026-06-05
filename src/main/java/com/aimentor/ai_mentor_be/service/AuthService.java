@@ -84,8 +84,10 @@ public class AuthService {
                     return userRepository.save(newUser);
                 });
 
-        String jwt = jwtService.generateToken(user.getEmail());
-
+        String jwt = jwtService.generateToken(
+                user.getEmail(),
+                user.getRole().getRoleName()
+        );
         return AuthResponse.builder()
                 .token(jwt)
                 .email(user.getEmail())
@@ -142,8 +144,10 @@ public class AuthService {
             throw new RuntimeException("Wrong password");
         }
 
-        String jwt = jwtService.generateToken(user.getEmail());
-
+        String jwt = jwtService.generateToken(
+                user.getEmail(),
+                user.getRole().getRoleName()
+        );
         return AuthResponse.builder()
                 .token(jwt)
                 .email(user.getEmail())

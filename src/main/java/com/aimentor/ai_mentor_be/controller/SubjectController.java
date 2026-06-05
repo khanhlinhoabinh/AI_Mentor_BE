@@ -7,9 +7,10 @@ import com.aimentor.ai_mentor_be.service.SubjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.aimentor.ai_mentor_be.entity.User;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/subjects")
@@ -21,13 +22,20 @@ public class SubjectController {
     // CREATE SUBJECT
     @PostMapping
     public ResponseEntity<SubjectResponse> createSubject(
-            @RequestHeader("userId") UUID userId,
             @RequestBody CreateSubjectRequest request
     ) {
 
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        User user =
+                (User) authentication.getPrincipal();
+
         return ResponseEntity.ok(
                 subjectService.createSubject(
-                        userId,
+                        user.getUserId(),
                         request
                 )
         );
@@ -35,13 +43,19 @@ public class SubjectController {
 
     // GET ALL SUBJECTS
     @GetMapping
-    public ResponseEntity<List<SubjectResponse>> getSubjects(
-            @RequestHeader("userId") UUID userId
-    ) {
+    public ResponseEntity<List<SubjectResponse>> getSubjects() {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        User user =
+                (User) authentication.getPrincipal();
 
         return ResponseEntity.ok(
                 subjectService.getSubjectsByUser(
-                        userId
+                        user.getUserId()
                 )
         );
     }
@@ -49,13 +63,20 @@ public class SubjectController {
     // GET SUBJECT DETAIL
     @GetMapping("/{subjectId}")
     public ResponseEntity<SubjectResponse> getSubjectDetail(
-            @RequestHeader("userId") UUID userId,
             @PathVariable Long subjectId
     ) {
 
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        User user =
+                (User) authentication.getPrincipal();
+
         return ResponseEntity.ok(
                 subjectService.getSubjectDetail(
-                        userId,
+                        user.getUserId(),
                         subjectId
                 )
         );
@@ -64,14 +85,21 @@ public class SubjectController {
     // UPDATE SUBJECT
     @PutMapping("/{subjectId}")
     public ResponseEntity<SubjectResponse> updateSubject(
-            @RequestHeader("userId") UUID userId,
             @PathVariable Long subjectId,
             @RequestBody UpdateSubjectRequest request
     ) {
 
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        User user =
+                (User) authentication.getPrincipal();
+
         return ResponseEntity.ok(
                 subjectService.updateSubject(
-                        userId,
+                        user.getUserId(),
                         subjectId,
                         request
                 )
@@ -81,12 +109,19 @@ public class SubjectController {
     // DELETE SUBJECT
     @DeleteMapping("/{subjectId}")
     public ResponseEntity<String> deleteSubject(
-            @RequestHeader("userId") UUID userId,
             @PathVariable Long subjectId
     ) {
 
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        User user =
+                (User) authentication.getPrincipal();
+
         subjectService.deleteSubject(
-                userId,
+                user.getUserId(),
                 subjectId
         );
 
