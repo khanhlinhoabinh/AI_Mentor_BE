@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.aimentor.ai_mentor_be.entity.User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+
 import java.util.List;
 
 @RestController
@@ -56,6 +57,28 @@ public class SubjectController {
         return ResponseEntity.ok(
                 subjectService.getSubjectsByUser(
                         user.getUserId()
+                )
+        );
+    }
+
+    // SEARCH SUBJECT
+    @GetMapping("/search")
+    public ResponseEntity<List<SubjectResponse>> searchSubjects(
+            @RequestParam String keyword
+    ) {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        User user =
+                (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                subjectService.searchSubjects(
+                        user.getUserId(),
+                        keyword
                 )
         );
     }

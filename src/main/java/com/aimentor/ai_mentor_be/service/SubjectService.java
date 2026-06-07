@@ -58,6 +58,26 @@ public class SubjectService {
                 .toList();
     }
 
+    // SEARCH SUBJECT
+    public List<SubjectResponse> searchSubjects(
+            UUID userId,
+            String keyword
+    ) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        return subjectRepository
+                .findByUserAndSubjectNameContainingIgnoreCase(
+                        user,
+                        keyword
+                )
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     // GET SUBJECT DETAIL
     public SubjectResponse getSubjectDetail(
             UUID userId,
@@ -139,7 +159,7 @@ public class SubjectService {
                 .subjectName(subject.getSubjectName())
                 .description(subject.getDescription())
                 .createdAt(subject.getCreatedAt())
-                .updatedAt(subject.getUpdatedAt()) // bỏ dòng này nếu DTO chưa có field updatedAt
+                .updatedAt(subject.getUpdatedAt())
                 .build();
     }
 }

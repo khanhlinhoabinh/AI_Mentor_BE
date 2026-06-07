@@ -9,4 +9,9 @@ import java.util.List;
 public interface SubjectRepository extends JpaRepository<Subject, Long> {
 
     List<Subject> findByUser(User user);
+
+    List<Subject> findByUserAndSubjectNameContainingIgnoreCase(
+            User user,
+            String keyword
+    );
 }
