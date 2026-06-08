@@ -1,69 +1,75 @@
 package com.aimentor.ai_mentor_be.controller;
 
-import com.aimentor.ai_mentor_be.dto.UploadDocumentResponse;
+import com.aimentor.ai_mentor_be.dto.DocumentResponse;
+import com.aimentor.ai_mentor_be.entity.User;
 import com.aimentor.ai_mentor_be.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/documents")
+@RequestMapping("/api/subjects/{subjectId}/documents")
 @RequiredArgsConstructor
 public class DocumentController {
 
     private final DocumentService documentService;
 
-    @PostMapping("/upload/{subjectId}")
-    public ResponseEntity<UploadDocumentResponse>
-    uploadDocument(
+    // Lấy user hiện tại — giống hệt cách bạn dùng trong SubjectController
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+        return (User) auth.getPrincipal();
+    }
 
-            @RequestHeader("userId")
-            UUID userId,
-
-            @PathVariable
-            Long subjectId,
-
-            @RequestParam("file")
-            MultipartFile file
-
-    ) throws Exception {
+    // UPLOAD file PDF hoặc DOCX
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<DocumentResponse> upload(
+            @PathVariable Long subjectId,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
 
         return ResponseEntity.ok(
                 documentService.uploadDocument(
-                        userId,
+                        getCurrentUser(),
                         subjectId,
                         file
                 )
         );
     }
-    @GetMapping("/subject/{subjectId}")
-    public ResponseEntity<List<UploadDocumentResponse>>
-    getDocuments(
+
+    // LẤY DANH SÁCH tài liệu của một môn học
+    @GetMapping
+    public ResponseEntity<List<DocumentResponse>> getAll(
             @PathVariable Long subjectId
     ) {
 
         return ResponseEntity.ok(
                 documentService.getDocumentsBySubject(
+                        getCurrentUser(),
                         subjectId
                 )
         );
     }
+
+    // XÓA tài liệu
     @DeleteMapping("/{documentId}")
-    public ResponseEntity<String>
-    deleteDocument(
+    public ResponseEntity<String> delete(
+            @PathVariable Long subjectId,
             @PathVariable Long documentId
-    ) {
+    ) throws IOException {
 
         documentService.deleteDocument(
+                getCurrentUser(),
                 documentId
         );
 
-        return ResponseEntity.ok(
-                "Delete document successfully"
-        );
+        return ResponseEntity.ok("Document deleted successfully");
     }
 }
