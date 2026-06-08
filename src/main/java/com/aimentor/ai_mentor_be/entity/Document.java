@@ -45,6 +45,20 @@ public class Document {
     @Column(name = "extracted_text", columnDefinition = "LONGTEXT")
     private String extractedText;
 
+    // ===== 3 FIELDS MỚI =====
+
+    @Column(name = "status", length = 20)
+    @Builder.Default
+    private String status = "UPLOADED";
+
+    @Column(name = "last_viewed_at")
+    private Timestamp lastViewedAt;
+
+    @Column(name = "last_edited_at")
+    private Timestamp lastEditedAt;
+
+    // ========================
+
     @Column(name = "created_at")
     private Timestamp createdAt;
 
@@ -56,6 +70,10 @@ public class Document {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         this.createdAt = now;
         this.updatedAt = now;
+        // Đảm bảo status luôn có giá trị mặc định khi tạo mới
+        if (this.status == null) {
+            this.status = "UPLOADED";
+        }
     }
 
     @PreUpdate
