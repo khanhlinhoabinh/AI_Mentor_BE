@@ -1,6 +1,8 @@
 package com.aimentor.ai_mentor_be.service;
 
+import com.aimentor.ai_mentor_be.dto.DocumentCountResponse;
 import com.aimentor.ai_mentor_be.dto.DocumentResponse;
+import com.aimentor.ai_mentor_be.dto.EditDocumentRequest;
 import com.aimentor.ai_mentor_be.entity.Document;
 import com.aimentor.ai_mentor_be.entity.Subject;
 import com.aimentor.ai_mentor_be.entity.User;
@@ -15,16 +17,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.*;
+import java.nio.file.*;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.nio.file.Paths;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +32,6 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final SubjectRepository subjectRepository;
 
-    // Khớp với key trong application.properties của bạn
     @Value("${upload.path}")
     private String uploadPath;
 
@@ -44,18 +42,13 @@ public class DocumentService {
             MultipartFile file
     ) throws IOException {
 
-        // 1. Kiểm tra môn học tồn tại và thuộc về user
         Subject subject = subjectRepository.findById(subjectId)
-                .orElseThrow(() ->
-                        new RuntimeException("Subject not found"));
+                .orElseThrow(() -> new RuntimeException("Subject not found"));
 
-        if (!subject.getUser().getUserId()
-                .equals(currentUser.getUserId())) {
-            throw new RuntimeException(
-                    "You do not have permission to upload to this subject");
+        if (!subject.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new RuntimeException("You do not have permission");
         }
 
-        // 2. Kiểm tra định dạng file (chỉ cho PDF và DOCX)
         String originalName = file.getOriginalFilename();
         String fileType = detectFileType(originalName);
 
@@ -64,26 +57,18 @@ public class DocumentService {
                     "Only PDF (.pdf) and Word (.docx) files are allowed");
         }
 
-        // 3. Tạo thư mục uploads nếu chưa tồn tại
-        Path uploadDir = Paths.get(uploadPath)
-                .toAbsolutePath()
-                .normalize();
+        Path uploadDir = Paths.get(uploadPath).toAbsolutePath().normalize();
         Files.createDirectories(uploadDir);
 
-        // 4. Tạo tên file duy nhất để tránh trùng
         String storedFileName = UUID.randomUUID() + "_" + originalName;
         Path targetPath = uploadDir.resolve(storedFileName);
 
-        // 5. Lưu file xuống disk
         try (InputStream is = file.getInputStream()) {
             Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        // 6. Extract text (để dùng cho AI sau này)
-        String extractedText = extractText(
-                targetPath.toFile(), fileType);
+        String extractedText = extractText(targetPath.toFile(), fileType);
 
-        // 7. Lưu thông tin vào DB
         Document document = Document.builder()
                 .subject(subject)
                 .uploadedBy(currentUser)
@@ -91,6 +76,7 @@ public class DocumentService {
                 .fileType(fileType)
                 .filePath(targetPath.toString())
                 .extractedText(extractedText)
+                .status("UPLOADED")
                 .build();
 
         return mapToResponse(documentRepository.save(document));
@@ -101,15 +87,11 @@ public class DocumentService {
             User currentUser,
             Long subjectId
     ) {
-
         Subject subject = subjectRepository.findById(subjectId)
-                .orElseThrow(() ->
-                        new RuntimeException("Subject not found"));
+                .orElseThrow(() -> new RuntimeException("Subject not found"));
 
-        if (!subject.getUser().getUserId()
-                .equals(currentUser.getUserId())) {
-            throw new RuntimeException(
-                    "You do not have permission");
+        if (!subject.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new RuntimeException("You do not have permission");
         }
 
         return documentRepository.findBySubject(subject)
@@ -125,36 +107,123 @@ public class DocumentService {
     ) throws IOException {
 
         Document document = documentRepository.findById(documentId)
-                .orElseThrow(() ->
-                        new RuntimeException("Document not found"));
+                .orElseThrow(() -> new RuntimeException("Document not found"));
 
-        // Chỉ người upload mới được xóa
-        if (!document.getUploadedBy().getUserId()
-                .equals(currentUser.getUserId())) {
-            throw new RuntimeException(
-                    "You do not have permission to delete this document");
+        if (!document.getUploadedBy().getUserId().equals(currentUser.getUserId())) {
+            throw new RuntimeException("You do not have permission");
         }
 
-        // Xóa file vật lý trên disk
         Path filePath = Paths.get(document.getFilePath());
         Files.deleteIfExists(filePath);
-
-        // Xóa record trong DB
         documentRepository.delete(document);
     }
 
-    // ===================== PRIVATE HELPERS =====================
+    // ===================== VIEW → SEEN =====================
+    public DocumentResponse viewDocument(
+            User currentUser,
+            Long documentId
+    ) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
 
-    // Nhận diện loại file qua đuôi mở rộng
+        if (!document.getUploadedBy().getUserId().equals(currentUser.getUserId())) {
+            throw new RuntimeException("You do not have permission");
+        }
+
+        // EDITED quan trọng hơn SEEN, không override
+        if (!"EDITED".equals(document.getStatus())) {
+            document.setStatus("SEEN");
+        }
+
+        document.setLastViewedAt(new Timestamp(System.currentTimeMillis()));
+        return mapToResponse(documentRepository.save(document));
+    }
+
+    // ===================== EDIT WORD =====================
+    public DocumentResponse editDocument(
+            User currentUser,
+            Long documentId,
+            EditDocumentRequest request
+    ) throws IOException {
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+
+        if (!document.getUploadedBy().getUserId().equals(currentUser.getUserId())) {
+            throw new RuntimeException("You do not have permission");
+        }
+
+        if (!"DOCX".equals(document.getFileType())) {
+            throw new RuntimeException(
+                    "Only DOCX files can be edited. PDF is read-only.");
+        }
+
+        File file = new File(document.getFilePath());
+        if (!file.exists()) {
+            throw new RuntimeException("File not found on server");
+        }
+
+        try (XWPFDocument docx = new XWPFDocument(
+                Files.newInputStream(file.toPath()))) {
+
+            // Xóa toàn bộ paragraph cũ
+            int size = docx.getParagraphs().size();
+            for (int i = size - 1; i >= 0; i--) {
+                docx.removeBodyElement(i);
+            }
+
+            // Ghi nội dung mới
+            String[] lines = request.getContent().split("\n");
+            for (String line : lines) {
+                XWPFParagraph para = docx.createParagraph();
+                para.createRun().setText(line);
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                docx.write(fos);
+            }
+        }
+
+        document.setExtractedText(request.getContent());
+        document.setStatus("EDITED");
+        document.setLastEditedAt(new Timestamp(System.currentTimeMillis()));
+        return mapToResponse(documentRepository.save(document));
+    }
+
+    // ===================== COUNT =====================
+    public DocumentCountResponse countDocumentsBySubject(
+            User currentUser,
+            Long subjectId
+    ) {
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new RuntimeException("Subject not found"));
+
+        if (!subject.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new RuntimeException("You do not have permission");
+        }
+
+        long total = documentRepository.countBySubject(subject);
+        long totalPdf = documentRepository.countBySubjectAndFileType(subject, "PDF");
+        long totalDocx = documentRepository.countBySubjectAndFileType(subject, "DOCX");
+
+        return DocumentCountResponse.builder()
+                .subjectId(subject.getSubjectId())
+                .subjectName(subject.getSubjectName())
+                .totalDocuments(total)
+                .totalPdf(totalPdf)
+                .totalDocx(totalDocx)
+                .build();
+    }
+
+    // ===================== HELPERS =====================
     private String detectFileType(String fileName) {
         if (fileName == null) return null;
         String lower = fileName.toLowerCase();
         if (lower.endsWith(".pdf"))  return "PDF";
         if (lower.endsWith(".docx")) return "DOCX";
-        return null; // không hợp lệ
+        return null;
     }
 
-    // Điều phối extract text theo loại file
     private String extractText(File file, String fileType) {
         try {
             return switch (fileType) {
@@ -163,7 +232,6 @@ public class DocumentService {
                 default     -> "";
             };
         } catch (Exception e) {
-            // Không extract được thì để trống, không block upload
             return "";
         }
     }
@@ -185,7 +253,7 @@ public class DocumentService {
         }
     }
 
-    // Entity -> DTO
+    // ✅ mapToResponse đầy đủ 3 fields mới
     private DocumentResponse mapToResponse(Document document) {
         return DocumentResponse.builder()
                 .documentId(document.getDocumentId())
@@ -194,8 +262,25 @@ public class DocumentService {
                 .fileName(document.getFileName())
                 .fileType(document.getFileType())
                 .filePath(document.getFilePath())
+                .extractedText(document.getExtractedText())
+                .status(document.getStatus())
+                .lastViewedAt(document.getLastViewedAt())
+                .lastEditedAt(document.getLastEditedAt())
                 .createdAt(document.getCreatedAt())
                 .updatedAt(document.getUpdatedAt())
                 .build();
     }
+    // Lấy entity để serve file — dùng cho endpoint download
+    public Document getDocumentEntity(User currentUser, Long documentId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+
+        if (!document.getUploadedBy().getUserId()
+                .equals(currentUser.getUserId())) {
+            throw new RuntimeException("You do not have permission");
+        }
+
+        return document;
+    }
+
 }

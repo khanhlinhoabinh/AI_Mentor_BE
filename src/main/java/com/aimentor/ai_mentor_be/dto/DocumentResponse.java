@@ -1,7 +1,6 @@
 package com.aimentor.ai_mentor_be.dto;
 
 import lombok.*;
-
 import java.sql.Timestamp;
 
 @Getter
@@ -17,6 +16,14 @@ public class DocumentResponse {
     private String fileName;
     private String fileType;
     private String filePath;
+
+    private String extractedText;
+
+    // ✅ Thêm 3 fields mới
+    private String status;
+    private Timestamp lastViewedAt;
+    private Timestamp lastEditedAt;
+
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

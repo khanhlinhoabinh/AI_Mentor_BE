@@ -33,6 +33,8 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/subjects/*/documents/*/file").authenticated()
+                        .requestMatchers("/api/subjects/*/documents/**").authenticated()
                         .requestMatchers("/api/subjects/**")
                         .hasRole("USER")
                         .anyRequest().authenticated()
@@ -60,6 +62,7 @@ public class SecurityConfig {
                 "POST",
                 "PUT",
                 "DELETE",
+                "PATCH" ,
                 "OPTIONS"
         ));
 
