@@ -1,0 +1,11 @@
+package com.aimentor.ai_mentor_be.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class CreateConversationResponse {
+
+    private Long conversationId;
+}
