@@ -7,6 +7,7 @@ import com.aimentor.ai_mentor_be.entity.Document;
 import com.aimentor.ai_mentor_be.entity.Subject;
 import com.aimentor.ai_mentor_be.entity.User;
 import com.aimentor.ai_mentor_be.repository.DocumentRepository;
+import com.aimentor.ai_mentor_be.repository.PdfAnnotationRepository;
 import com.aimentor.ai_mentor_be.repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -15,6 +16,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
@@ -31,6 +33,7 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final SubjectRepository subjectRepository;
+    private final PdfAnnotationRepository annotationRepository;
 
     @Value("${upload.path}")
     private String uploadPath;
@@ -101,6 +104,7 @@ public class DocumentService {
     }
 
     // ===================== DELETE =====================
+    @Transactional
     public void deleteDocument(
             User currentUser,
             Long documentId
@@ -112,6 +116,9 @@ public class DocumentService {
         if (!document.getUploadedBy().getUserId().equals(currentUser.getUserId())) {
             throw new RuntimeException("You do not have permission");
         }
+
+        // ✅ Xóa annotations trước để tránh foreign key constraint
+        annotationRepository.deleteByDocument(document);
 
         Path filePath = Paths.get(document.getFilePath());
         Files.deleteIfExists(filePath);
