@@ -156,44 +156,20 @@ public class DocumentService {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
 
-        if (!document.getUploadedBy().getUserId().equals(currentUser.getUserId())) {
+        if (!document.getUploadedBy().getUserId()
+                .equals(currentUser.getUserId())) {
             throw new RuntimeException("You do not have permission");
         }
 
         if (!"DOCX".equals(document.getFileType())) {
-            throw new RuntimeException(
-                    "Only DOCX files can be edited. PDF is read-only.");
+            throw new RuntimeException("Only DOCX files can be edited.");
         }
 
-        File file = new File(document.getFilePath());
-        if (!file.exists()) {
-            throw new RuntimeException("File not found on server");
-        }
-
-        try (XWPFDocument docx = new XWPFDocument(
-                Files.newInputStream(file.toPath()))) {
-
-            // Xóa toàn bộ paragraph cũ
-            int size = docx.getParagraphs().size();
-            for (int i = size - 1; i >= 0; i--) {
-                docx.removeBodyElement(i);
-            }
-
-            // Ghi nội dung mới
-            String[] lines = request.getContent().split("\n");
-            for (String line : lines) {
-                XWPFParagraph para = docx.createParagraph();
-                para.createRun().setText(line);
-            }
-
-            try (FileOutputStream fos = new FileOutputStream(file)) {
-                docx.write(fos);
-            }
-        }
-
+        // Lưu HTML content vào extractedText
         document.setExtractedText(request.getContent());
         document.setStatus("EDITED");
         document.setLastEditedAt(new Timestamp(System.currentTimeMillis()));
+
         return mapToResponse(documentRepository.save(document));
     }
 
@@ -277,6 +253,7 @@ public class DocumentService {
                 .updatedAt(document.getUpdatedAt())
                 .build();
     }
+
     // Lấy entity để serve file — dùng cho endpoint download
     public Document getDocumentEntity(User currentUser, Long documentId) {
         Document document = documentRepository.findById(documentId)
