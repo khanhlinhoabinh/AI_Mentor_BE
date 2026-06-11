@@ -90,6 +90,7 @@ public class AuthService {
         );
         return AuthResponse.builder()
                 .token(jwt)
+                .userId(user.getUserId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().getRoleName())
@@ -150,6 +151,7 @@ public class AuthService {
         );
         return AuthResponse.builder()
                 .token(jwt)
+                .userId(user.getUserId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().getRoleName())
