@@ -1,5 +1,6 @@
 package com.aimentor.ai_mentor_be.service;
 
+import com.aimentor.ai_mentor_be.dto.CreateEmptyDocumentRequest;
 import com.aimentor.ai_mentor_be.dto.DocumentCountResponse;
 import com.aimentor.ai_mentor_be.dto.DocumentResponse;
 import com.aimentor.ai_mentor_be.dto.EditDocumentRequest;
@@ -265,6 +266,58 @@ public class DocumentService {
         }
 
         return document;
+    }
+    // ===================== TẠO TÀI LIỆU TRỐNG =====================
+    public DocumentResponse createEmptyDocument(
+            User currentUser,
+            Long subjectId,
+            CreateEmptyDocumentRequest request
+    ) throws IOException {
+
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new RuntimeException("Subject not found"));
+
+        if (!subject.getUser().getUserId()
+                .equals(currentUser.getUserId())) {
+            throw new RuntimeException("You do not have permission");
+        }
+
+        // Đảm bảo tên file có đuôi .docx
+        String fileName = request.getFileName();
+        if (fileName == null || fileName.isBlank()) {
+            fileName = "Tài liệu mới";
+        }
+        if (!fileName.toLowerCase().endsWith(".docx")) {
+            fileName = fileName + ".docx";
+        }
+
+        // Tạo file DOCX rỗng trên disk
+        Path uploadDir = Paths.get(uploadPath).toAbsolutePath().normalize();
+        Files.createDirectories(uploadDir);
+
+        String storedName = UUID.randomUUID() + "_" + fileName;
+        Path targetPath   = uploadDir.resolve(storedName);
+
+        // Tạo file DOCX rỗng bằng POI
+        try (XWPFDocument emptyDoc = new XWPFDocument()) {
+            emptyDoc.createParagraph(); // paragraph rỗng
+            try (java.io.FileOutputStream fos =
+                         new java.io.FileOutputStream(targetPath.toFile())) {
+                emptyDoc.write(fos);
+            }
+        }
+
+        Document document = Document.builder()
+                .subject(subject)
+                .uploadedBy(currentUser)
+                .fileName(fileName)
+                .fileType("DOCX")
+                .filePath(targetPath.toString())
+                .extractedText("") // rỗng, sẽ được điền khi user nhập
+                .status("UPLOADED")
+                .build();
+
+        return mapToResponse(documentRepository.save(document));
     }
 
 }
