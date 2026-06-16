@@ -1,5 +1,6 @@
 package com.aimentor.ai_mentor_be.controller;
 
+import com.aimentor.ai_mentor_be.dto.CreateEmptyDocumentRequest;
 import com.aimentor.ai_mentor_be.dto.DocumentCountResponse;
 import com.aimentor.ai_mentor_be.dto.DocumentResponse;
 import com.aimentor.ai_mentor_be.dto.EditDocumentRequest;
@@ -118,5 +119,15 @@ public class DocumentController {
                 .header("Content-Disposition",
                         "inline; filename=\"" + document.getFileName() + "\"")
                 .body(resource);
+    }
+    // TẠO TÀI LIỆU TRỐNG
+    @PostMapping("/empty")
+    public ResponseEntity<DocumentResponse> createEmpty(
+            @PathVariable Long subjectId,
+            @RequestBody CreateEmptyDocumentRequest request
+    ) throws IOException {
+        return ResponseEntity.ok(
+                documentService.createEmptyDocument(
+                        getCurrentUser(), subjectId, request));
     }
 }
