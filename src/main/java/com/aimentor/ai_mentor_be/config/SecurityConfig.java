@@ -34,7 +34,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/subjects/*/documents/*/file").authenticated()
-                        .requestMatchers("/api/chat/**").permitAll()
+
+                        .requestMatchers("/api/chat/**").authenticated()
                         .requestMatchers("/api/subjects/*/documents/**").authenticated()
                         .requestMatchers("/api/subjects/**")
                         .hasRole("USER")
