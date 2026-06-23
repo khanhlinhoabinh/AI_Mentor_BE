@@ -118,4 +118,20 @@ public class FlashcardSetController {
 
         return (User) authentication.getPrincipal();
     }
+    @PutMapping("/{id}/source")
+    public ResponseEntity<FlashcardSetResponse> updateSourceType(
+            @PathVariable Long id,
+            @RequestBody UpdateFlashcardSourceRequest request
+    ) {
+
+        User user = getCurrentUser();
+
+        return ResponseEntity.ok(
+                flashcardSetService.updateSourceType(
+                        user.getUserId(),
+                        id,
+                        request
+                )
+        );
+    }
 }

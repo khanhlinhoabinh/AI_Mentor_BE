@@ -9,4 +9,8 @@ public interface FlashcardRepository
     List<Flashcard> findByFlashcardSet_FlashcardSetIdOrderByDisplayOrderAsc(
             Long flashcardSetId
     );
+
+    long countByFlashcardSet_FlashcardSetId(
+            Long flashcardSetId
+    );
 }
