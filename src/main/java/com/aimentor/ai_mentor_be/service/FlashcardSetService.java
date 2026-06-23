@@ -182,4 +182,26 @@ public class FlashcardSetService {
                 )
                 .build();
     }
+    public FlashcardSetResponse updateSourceType(
+            UUID userId,
+            Long setId,
+            UpdateFlashcardSourceRequest request
+    ) {
+
+        FlashcardSet flashcardSet =
+                getOwnedFlashcardSet(
+                        userId,
+                        setId
+                );
+
+        flashcardSet.setSourceType(
+                request.getSourceType()
+        );
+
+        return mapToResponse(
+                flashcardSetRepository.save(
+                        flashcardSet
+                )
+        );
+    }
 }
