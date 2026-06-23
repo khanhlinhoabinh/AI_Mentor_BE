@@ -134,4 +134,18 @@ public class FlashcardSetController {
                 )
         );
     }
+    @GetMapping("/{id}/full")
+    public ResponseEntity<FlashcardSetFullResponse> getFullDetail(
+            @PathVariable Long id
+    ) {
+
+        User user = getCurrentUser();
+
+        return ResponseEntity.ok(
+                flashcardSetService.getFullDetail(
+                        user.getUserId(),
+                        id
+                )
+        );
+    }
 }

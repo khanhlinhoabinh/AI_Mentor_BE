@@ -5,6 +5,7 @@ import com.aimentor.ai_mentor_be.entity.FlashcardSet;
 import com.aimentor.ai_mentor_be.entity.User;
 import com.aimentor.ai_mentor_be.entity.enums.FlashcardSourceType;
 import com.aimentor.ai_mentor_be.repository.FlashcardSetRepository;
+import com.aimentor.ai_mentor_be.repository.FlashcardRepository;
 import com.aimentor.ai_mentor_be.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class FlashcardSetService {
 
     private final FlashcardSetRepository flashcardSetRepository;
+    private final FlashcardRepository flashcardRepository;
     private final UserRepository userRepository;
     private final SubjectRepository subjectRepository;
     public FlashcardSetResponse create(
@@ -203,5 +205,78 @@ public class FlashcardSetService {
                         flashcardSet
                 )
         );
+    }
+    public FlashcardSetFullResponse getFullDetail(
+            UUID userId,
+            Long setId
+    ) {
+
+        FlashcardSet flashcardSet =
+                getOwnedFlashcardSet(
+                        userId,
+                        setId
+                );
+
+        List<FlashcardResponse> cards =
+                flashcardRepository
+                        .findByFlashcardSet_FlashcardSetIdOrderByDisplayOrderAsc(
+                                setId
+                        )
+                        .stream()
+                        .map(card ->
+                                FlashcardResponse.builder()
+                                        .flashcardId(
+                                                card.getFlashcardId()
+                                        )
+                                        .flashcardSetId(
+                                                setId
+                                        )
+                                        .cardType(
+                                                card.getCardType()
+                                        )
+                                        .frontContent(
+                                                card.getFrontContent()
+                                        )
+                                        .backContent(
+                                                card.getBackContent()
+                                        )
+                                        .displayOrder(
+                                                card.getDisplayOrder()
+                                        )
+                                        .createdAt(
+                                                card.getCreatedAt()
+                                        )
+                                        .build()
+                        )
+                        .toList();
+
+        return FlashcardSetFullResponse.builder()
+                .flashcardSetId(
+                        flashcardSet.getFlashcardSetId()
+                )
+                .subjectId(
+                        flashcardSet.getSubject() != null
+                                ? flashcardSet.getSubject().getSubjectId()
+                                : null
+                )
+                .setName(
+                        flashcardSet.getSetName()
+                )
+                .description(
+                        flashcardSet.getDescription()
+                )
+                .totalCards(
+                        flashcardSet.getTotalCards()
+                )
+                .sourceType(
+                        flashcardSet.getSourceType() != null
+                                ? flashcardSet.getSourceType().name()
+                                : null
+                )
+                .createdAt(
+                        flashcardSet.getCreatedAt()
+                )
+                .cards(cards)
+                .build();
     }
 }
