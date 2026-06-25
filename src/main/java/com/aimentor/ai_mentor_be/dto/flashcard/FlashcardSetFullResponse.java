@@ -1,6 +1,7 @@
 package com.aimentor.ai_mentor_be.dto.flashcard;
 
 import lombok.*;
+import com.aimentor.ai_mentor_be.entity.enums.FlashcardSourceType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,7 +23,7 @@ public class FlashcardSetFullResponse {
 
     private Integer totalCards;
 
-    private String sourceType;
+    private FlashcardSourceType sourceType;
 
     private LocalDateTime createdAt;
 
