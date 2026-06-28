@@ -75,4 +75,9 @@ public class GeminiService {
             return "Không đọc được phản hồi từ Gemini";
         }
     }
+    public String generateFlashcards(
+            String prompt
+    ) {
+        return chat(prompt);
+    }
 }

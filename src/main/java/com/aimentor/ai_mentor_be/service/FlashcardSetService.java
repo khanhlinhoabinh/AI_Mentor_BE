@@ -269,9 +269,7 @@ public class FlashcardSetService {
                         flashcardSet.getTotalCards()
                 )
                 .sourceType(
-                        flashcardSet.getSourceType() != null
-                                ? flashcardSet.getSourceType().name()
-                                : null
+                        flashcardSet.getSourceType()
                 )
                 .createdAt(
                         flashcardSet.getCreatedAt()

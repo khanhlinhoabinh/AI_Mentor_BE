@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
+import com.aimentor.ai_mentor_be.service.AiFlashcardService;
 import java.util.List;
 
 @RestController
@@ -17,7 +17,7 @@ import java.util.List;
 public class FlashcardSetController {
 
     private final FlashcardSetService flashcardSetService;
-
+    private final AiFlashcardService aiFlashcardService;
     @PostMapping
     public ResponseEntity<FlashcardSetResponse> create(
             @RequestBody CreateFlashcardSetRequest request
@@ -145,6 +145,20 @@ public class FlashcardSetController {
                 flashcardSetService.getFullDetail(
                         user.getUserId(),
                         id
+                )
+        );
+    }
+    @PostMapping("/generate")
+    public ResponseEntity<FlashcardSetFullResponse> generateByAI(
+            @RequestBody GenerateFlashcardRequest request
+    ) {
+
+        User user = getCurrentUser();
+
+        return ResponseEntity.ok(
+                aiFlashcardService.generate(
+                        user,
+                        request
                 )
         );
     }
