@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // 3. Các API cần xác thực
+                        .requestMatchers("/api/quiz/**").authenticated()
                         .requestMatchers("/api/subjects/*/documents/*/file").authenticated()
                         .requestMatchers("/api/chat/**").authenticated()
                         .requestMatchers("/api/subjects/*/documents/**").authenticated()
