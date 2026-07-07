@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/roadmap-tasks/**").hasRole("USER")
                         .requestMatchers("/api/subjects/**").hasRole("USER")
                         .requestMatchers("/api/roadmaps/**").hasRole("USER")
+                        .requestMatchers("/api/reminders/**").authenticated()
+                        .requestMatchers("/api/notifications/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
