@@ -27,51 +27,105 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable()) // Vô hiệu hóa CSRF cho API
+                .csrf(csrf -> csrf.disable())
+
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Công khai các API xác thực
+
+                        // ================= PUBLIC =================
+
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // 2. CHO PHÉP TẤT CẢ OPTIONS (Sửa lỗi 403 khi gọi POST/PUT/DELETE từ Postman/Frontend)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 3. Các API cần xác thực
-                        .requestMatchers("/api/quiz/**").authenticated()
-                        .requestMatchers("/api/subjects/*/documents/*/file").authenticated()
-                        .requestMatchers("/api/chat/**").authenticated()
-                        .requestMatchers("/api/subjects/*/documents/**").authenticated()
+                        // ================= ADMIN =================
 
-                        // 4. Các API cần quyền ROLE_USER
-                        .requestMatchers("/api/roadmap-tasks/**").hasRole("USER")
-                        .requestMatchers("/api/subjects/**").hasRole("USER")
-                        .requestMatchers("/api/roadmaps/**").hasRole("USER")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+
+                        // ================= AUTHENTICATED =================
+
+                        .requestMatchers("/api/quiz/**").authenticated()
+
+                        .requestMatchers("/api/chat/**").authenticated()
+
                         .requestMatchers("/api/reminders/**").authenticated()
+
                         .requestMatchers("/api/notifications/**").authenticated()
 
+                        .requestMatchers("/api/subjects/*/documents/*/file")
+                        .authenticated()
+
+                        .requestMatchers("/api/subjects/*/documents/**")
+                        .authenticated()
+
+                        // ================= USER =================
+
+                        .requestMatchers("/api/subjects/**")
+                        .hasRole("USER")
+
+                        .requestMatchers("/api/roadmaps/**")
+                        .hasRole("USER")
+
+                        .requestMatchers("/api/roadmap-tasks/**")
+                        .hasRole("USER")
+
+                        // ================= OTHERS =================
+
                         .anyRequest().authenticated()
+
                 )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+                .addFilterBefore(
+                        jwtFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+
+        configuration.setAllowedOrigins(
+                List.of("http://localhost:5173")
+        );
+
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS"
+                )
+        );
+
         configuration.setAllowedHeaders(List.of("*"));
+
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
+
         return source;
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder();
+
     }
+
 }

@@ -84,6 +84,13 @@ public class AuthService {
                     return userRepository.save(newUser);
                 });
 
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new RuntimeException("Account has been locked");
+        }
+
+        user.setLastLogin(new Timestamp(System.currentTimeMillis()));
+        userRepository.save(user);
+
         String jwt = jwtService.generateToken(
                 user.getEmail(),
                 user.getRole().getRoleName()
@@ -105,6 +112,10 @@ public class AuthService {
 
         User user = userRepository.findByEmail(email)
                 .orElse(null);
+        // Nếu tài khoản tồn tại nhưng đã bị khóa
+        if (user != null && !Boolean.TRUE.equals(user.getIsActive())) {
+            throw new RuntimeException("Account has been locked");
+        }
 
         // nếu chưa tồn tại => tạo admin mới
         if (user == null) {
@@ -144,6 +155,9 @@ public class AuthService {
         if (!isMatch) {
             throw new RuntimeException("Wrong password");
         }
+        user.setLastLogin(new Timestamp(System.currentTimeMillis()));
+
+        userRepository.save(user);
 
         String jwt = jwtService.generateToken(
                 user.getEmail(),
