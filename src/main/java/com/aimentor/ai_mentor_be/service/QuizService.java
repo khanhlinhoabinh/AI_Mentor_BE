@@ -9,6 +9,8 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.*;
@@ -24,6 +26,7 @@ public class QuizService {
     private final SubjectRepository      subjectRepository;
     private final UserRepository         userRepository;
     private final GeminiService          geminiService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // ═══════════════════════════════════
     // 1. TẠO BỘ QUIZ
@@ -166,38 +169,113 @@ public class QuizService {
     // ═══════════════════════════════════
     @Transactional
     public QuizResultResponse submitQuiz(
-            User currentUser, Long quizSetId, SubmitQuizRequest req
+            User currentUser,
+            Long quizSetId,
+            SubmitQuizRequest req
     ) {
+
         QuizSet quizSet = getQuizSetOwned(currentUser, quizSetId);
+
         List<QuizQuestion> questions =
                 quizQuestionRepository.findByQuizSetOrderByOrderIndex(quizSet);
 
         int correct = 0;
+
         for (QuizQuestion q : questions) {
-            String userAnswer = req.getAnswers().get(q.getId());
-            if (userAnswer != null && userAnswer.trim()
-                    .equalsIgnoreCase(q.getCorrectAnswer() != null
-                            ? q.getCorrectAnswer().trim() : "")) {
-                correct++;
+
+            // ==========================
+            // MULTIPLE CHOICE
+            // ==========================
+            if ("MULTIPLE_CHOICE".equals(quizSet.getQuestionType())) {
+
+                String userAnswer =
+                        req.getAnswers().get(String.valueOf(q.getId()));
+
+                if (userAnswer != null
+                        && userAnswer.trim().equalsIgnoreCase(
+                        q.getCorrectAnswer() == null
+                                ? ""
+                                : q.getCorrectAnswer().trim())) {
+
+                    correct++;
+                }
+
             }
+
+            // ==========================
+            // TRUE FALSE
+            // ==========================
+            else {
+
+                try {
+
+                    List<Map<String, Object>> statements =
+                            objectMapper.readValue(
+                                    q.getOptionsJson(),
+                                    new TypeReference<List<Map<String, Object>>>() {
+                                    });
+
+                    boolean allCorrect = true;
+
+                    for (int i = 0; i < statements.size(); i++) {
+
+                        String key = q.getId() + "_" + i;
+
+                        String user =
+                                req.getAnswers().get(key);
+
+                        Boolean answer =
+                                (Boolean) statements.get(i).get("answer");
+
+                        if (user == null ||
+                                !String.valueOf(answer)
+                                        .equalsIgnoreCase(user)) {
+
+                            allCorrect = false;
+                            break;
+                        }
+
+                    }
+
+                    if (allCorrect) {
+                        correct++;
+                    }
+
+                } catch (Exception ex) {
+                    throw new RuntimeException(
+                            "Cannot parse TRUE_FALSE question", ex);
+                }
+
+            }
+
         }
 
-        double score = correct * quizSet.getPointsPerQuestion();
-        double pct   = questions.isEmpty() ? 0
-                : (double) correct / questions.size() * 100;
+        double score =
+                correct * quizSet.getPointsPerQuestion();
 
-        // Lưu lịch sử (ghi đè lần cũ nhất)
-        quizAttemptRepository.findTopByQuizSetAndUserOrderByAttemptedAtDesc(quizSet, currentUser)
+        double pct =
+                questions.isEmpty()
+                        ? 0
+                        : (double) correct
+                        / questions.size()
+                        * 100;
+
+        quizAttemptRepository
+                .findTopByQuizSetAndUserOrderByAttemptedAtDesc(
+                        quizSet,
+                        currentUser)
                 .ifPresent(quizAttemptRepository::delete);
 
-        QuizAttempt attempt = QuizAttempt.builder()
-                .quizSet(quizSet)
-                .user(currentUser)
-                .score(score)
-                .totalQuestions(questions.size())
-                .correctCount(correct)
-                .answersJson(toJson(req.getAnswers()))
-                .build();
+        QuizAttempt attempt =
+                QuizAttempt.builder()
+                        .quizSet(quizSet)
+                        .user(currentUser)
+                        .score(score)
+                        .totalQuestions(questions.size())
+                        .correctCount(correct)
+                        .answersJson(toJson(req.getAnswers()))
+                        .build();
+
         quizAttemptRepository.save(attempt);
 
         return QuizResultResponse.builder()
@@ -205,9 +283,13 @@ public class QuizService {
                 .totalQuestions(questions.size())
                 .correctCount(correct)
                 .percentage(pct)
-                .questions(questions.stream().map(this::mapQuestion).collect(Collectors.toList()))
+                .questions(
+                        questions.stream()
+                                .map(this::mapQuestion)
+                                .collect(Collectors.toList()))
                 .answersJson(toJson(req.getAnswers()))
                 .build();
+
     }
 
     // ═══════════════════════════════════
@@ -348,12 +430,23 @@ public class QuizService {
                 .build();
     }
 
-    private String toJson(Map<Long, String> map) {
+    private String toJson(Map<String, String> map) {
+
         StringBuilder sb = new StringBuilder("{");
-        map.forEach((k, v) ->
-                sb.append("\"").append(k).append("\":\"").append(v).append("\","));
-        if (sb.length() > 1) sb.deleteCharAt(sb.length() - 1);
+
+        map.forEach((k, v) -> sb
+                .append("\"")
+                .append(k)
+                .append("\":\"")
+                .append(v)
+                .append("\","));
+
+        if (sb.length() > 1) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+
         sb.append("}");
+
         return sb.toString();
     }
 }
