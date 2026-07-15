@@ -5,6 +5,7 @@ import com.aimentor.ai_mentor_be.dto.UserAdminResponse;
 import com.aimentor.ai_mentor_be.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import com.aimentor.ai_mentor_be.dto.DashboardStatisticsResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -79,5 +80,31 @@ public class AdminController {
         return "User unlocked successfully";
 
     }
+    @GetMapping("/users")
+    public List<UserAdminResponse> getAllUsers() {
+
+        return adminService.getAllUsers();
+
+    }
+    /**
+     * Xem chi tiết người dùng
+     */
+    @GetMapping("/users/{userId}")
+    public UserAdminResponse getUserDetail(
+            @PathVariable UUID userId
+    ) {
+
+        return adminService.getUserDetail(userId);
+
+    }
+    @GetMapping("/dashboard")
+    public DashboardStatisticsResponse getDashboardStatistics(
+            @RequestParam int days
+    ) {
+
+        return adminService.getDashboardStatistics(days);
+
+    }
+
 
 }

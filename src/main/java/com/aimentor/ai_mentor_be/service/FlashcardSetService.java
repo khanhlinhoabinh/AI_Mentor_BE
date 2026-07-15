@@ -22,6 +22,8 @@ public class FlashcardSetService {
     private final FlashcardRepository flashcardRepository;
     private final UserRepository userRepository;
     private final SubjectRepository subjectRepository;
+    private final ActivityLogService activityLogService;
+
     public FlashcardSetResponse create(
             UUID userId,
             CreateFlashcardSetRequest request
@@ -48,10 +50,18 @@ public class FlashcardSetService {
                 .description(request.getDescription())
                 .totalCards(0)
                 .build();
+        FlashcardSet saved =
+                flashcardSetRepository.save(flashcardSet);
 
-        return mapToResponse(
-                flashcardSetRepository.save(flashcardSet)
+        activityLogService.saveLog(
+                user,
+                "CREATE_FLASHCARD_SET",
+                user.getFullName()
+                        + " vừa tạo bộ flashcard "
+                        + saved.getSetName()
         );
+
+        return mapToResponse(saved);
     }
 
     public List<FlashcardSetResponse> getAll(
@@ -109,7 +119,15 @@ public class FlashcardSetService {
 
         FlashcardSet flashcardSet =
                 getOwnedFlashcardSet(userId, setId);
+        User user = flashcardSet.getCreatedBy();
 
+        activityLogService.saveLog(
+                user,
+                "DELETE_FLASHCARD_SET",
+                user.getFullName()
+                        + " vừa xóa bộ flashcard "
+                        + flashcardSet.getSetName()
+        );
         flashcardSetRepository.delete(flashcardSet);
     }
 

@@ -6,6 +6,7 @@ import com.aimentor.ai_mentor_be.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.sql.Timestamp;
 
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 
@@ -22,5 +23,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     // Đếm số tài liệu còn tồn tại trên hệ thống
     long countByStatus(String status);
+    long countByUploadedBy(User user);
+    long countByCreatedAtAfter(Timestamp time);
 
 }
