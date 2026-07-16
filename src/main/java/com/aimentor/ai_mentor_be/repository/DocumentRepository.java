@@ -10,11 +10,17 @@ import java.util.List;
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     List<Document> findBySubject(Subject subject);
-
-    // ✅ Thêm 3 method đếm
     long countBySubject(Subject subject);
 
+    // Đếm tài liệu theo loại file
     long countBySubjectAndFileType(Subject subject, String fileType);
 
+    // Danh sách tài liệu do user upload
     List<Document> findByUploadedBy(User user);
+
+    // ================= ADMIN =================
+
+    // Đếm số tài liệu còn tồn tại trên hệ thống
+    long countByStatus(String status);
+
 }

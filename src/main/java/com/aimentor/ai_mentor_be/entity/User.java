@@ -21,7 +21,7 @@ public class User {
     private UUID userId;
 
     @ManyToOne
-    @JoinColumn(name = "role_id", nullable = false)
+    @JoinColumn(name = "role_id", nullable =false)
     private Role role;
 
     @Column(name = "full_name", nullable = false, length = 255)
@@ -50,4 +50,7 @@ public class User {
 
     @Column(name = "reset_token_expiry")
     private Timestamp resetTokenExpiry;
+
+    @Column(name = "last_login")
+    private Timestamp lastLogin;
 }
