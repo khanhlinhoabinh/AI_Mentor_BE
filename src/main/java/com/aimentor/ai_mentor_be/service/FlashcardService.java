@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import com.aimentor.ai_mentor_be.entity.enums.FlashcardSourceType;
 import java.util.List;
 import java.util.UUID;
+import com.aimentor.ai_mentor_be.entity.User;
+
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +19,7 @@ public class FlashcardService {
 
     private final FlashcardRepository flashcardRepository;
     private final FlashcardSetRepository flashcardSetRepository;
+    private final ActivityLogService activityLogService;
 
     public FlashcardResponse create(
             UUID userId,
@@ -60,6 +63,15 @@ public class FlashcardService {
         );
 
         flashcardSetRepository.save(flashcardSet);
+        User user = flashcardSet.getCreatedBy();
+
+        activityLogService.saveLog(
+                user,
+                "CREATE_FLASHCARD",
+                user.getFullName() +
+                        " vừa tạo flashcard: " +
+                        flashcard.getFrontContent()
+        );
 
         return mapToResponse(saved);
     }
@@ -127,6 +139,14 @@ public class FlashcardService {
                 flashcard.getFlashcardSet();
 
         flashcardRepository.delete(flashcard);
+        User user = flashcardSet.getCreatedBy();
+
+        activityLogService.saveLog(
+                user,
+                "DELETE_FLASHCARD",
+                user.getFullName()
+                        + " vừa xóa một flashcard"
+        );
 
         flashcardSet.setTotalCards(
                 Math.max(

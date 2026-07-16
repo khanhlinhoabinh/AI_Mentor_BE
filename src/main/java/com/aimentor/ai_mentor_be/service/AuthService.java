@@ -26,6 +26,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final ActivityLogService activityLogService;
 
     @Value("${google.client.id}")
     private String googleClientId;
@@ -90,6 +91,11 @@ public class AuthService {
 
         user.setLastLogin(new Timestamp(System.currentTimeMillis()));
         userRepository.save(user);
+        activityLogService.saveLog(
+                user,
+                "LOGIN",
+                user.getFullName() + " đăng nhập bằng Google"
+        );
 
         String jwt = jwtService.generateToken(
                 user.getEmail(),
@@ -158,6 +164,11 @@ public class AuthService {
         user.setLastLogin(new Timestamp(System.currentTimeMillis()));
 
         userRepository.save(user);
+        activityLogService.saveLog(
+                user,
+                "LOGIN",
+                user.getFullName() + " đăng nhập hệ thống"
+        );
 
         String jwt = jwtService.generateToken(
                 user.getEmail(),

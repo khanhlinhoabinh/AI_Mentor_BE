@@ -19,5 +19,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     // API 3
     List<User> findByCreatedAtAfter(Timestamp time);
-
+    List<User> findAllByOrderByCreatedAtDesc();
+    long countByCreatedAtAfter(Timestamp time);
 }

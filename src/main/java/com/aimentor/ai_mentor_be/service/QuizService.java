@@ -27,6 +27,7 @@ public class QuizService {
     private final UserRepository         userRepository;
     private final GeminiService          geminiService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ActivityLogService activityLogService;
 
     // ═══════════════════════════════════
     // 1. TẠO BỘ QUIZ
@@ -49,8 +50,19 @@ public class QuizService {
                 .pointsPerQuestion(req.getPointsPerQuestion())
                 .shuffle(req.getShuffle() != null ? req.getShuffle() : false)
                 .build();
+        QuizSet saved =
+                quizSetRepository.save(quizSet);
+
+        activityLogService.saveLog(
+                currentUser,
+                "CREATE_QUIZ",
+                currentUser.getFullName()
+                        + " vừa tạo bộ quiz "
+                        + saved.getTitle()
+        );
 
         return mapToResponse(quizSetRepository.save(quizSet), currentUser);
+
     }
 
     // ═══════════════════════════════════
@@ -76,6 +88,13 @@ public class QuizService {
         // ✅ Xóa theo đúng thứ tự: attempts → questions → quiz_set
         quizAttemptRepository.deleteByQuizSet(quizSet);
         quizQuestionRepository.deleteByQuizSet(quizSet);
+        activityLogService.saveLog(
+                currentUser,
+                "DELETE_QUIZ",
+                currentUser.getFullName()
+                        + " vừa xóa bộ quiz "
+                        + quizSet.getTitle()
+        );
         quizSetRepository.delete(quizSet);
     }
 
@@ -277,6 +296,13 @@ public class QuizService {
                         .build();
 
         quizAttemptRepository.save(attempt);
+        activityLogService.saveLog(
+                currentUser,
+                "SUBMIT_QUIZ",
+                currentUser.getFullName()
+                        + " vừa hoàn thành quiz "
+                        + quizSet.getTitle()
+        );
 
         return QuizResultResponse.builder()
                 .score(score)

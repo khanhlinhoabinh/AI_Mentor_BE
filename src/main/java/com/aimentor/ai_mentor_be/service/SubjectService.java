@@ -9,6 +9,7 @@ import com.aimentor.ai_mentor_be.repository.SubjectRepository;
 import com.aimentor.ai_mentor_be.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.aimentor.ai_mentor_be.service.ActivityLogService;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -21,6 +22,9 @@ public class SubjectService {
     private final SubjectRepository subjectRepository;
 
     private final UserRepository userRepository;
+
+    private final ActivityLogService activityLogService;
+
 
     // CREATE SUBJECT
     public SubjectResponse createSubject(
@@ -41,6 +45,16 @@ public class SubjectService {
                 .build();
 
         Subject savedSubject = subjectRepository.save(subject);
+        activityLogService.saveLog(
+                user,
+                "CREATE_SUBJECT",
+                user.getFullName() + " tạo môn học " + subject.getSubjectName()
+        );
+        activityLogService.saveLog(
+                user,
+                "CREATE_SUBJECT",
+                "Tạo môn học: " + subject.getSubjectName()
+        );
 
         return mapToResponse(savedSubject);
     }
@@ -105,6 +119,11 @@ public class SubjectService {
         );
 
         Subject updatedSubject = subjectRepository.save(subject);
+        activityLogService.saveLog(
+                user,
+                "UPDATE_SUBJECT",
+                user.getFullName() + " cập nhật môn học " + subject.getSubjectName()
+        );
 
         return mapToResponse(updatedSubject);
     }
@@ -126,6 +145,11 @@ public class SubjectService {
         if (!subject.getUser().getUserId().equals(user.getUserId())) {
             throw new RuntimeException("You do not have permission");
         }
+        activityLogService.saveLog(
+                user,
+                "DELETE_SUBJECT",
+                user.getFullName() + " xóa môn học " + subject.getSubjectName()
+        );
 
         subjectRepository.delete(subject);
     }

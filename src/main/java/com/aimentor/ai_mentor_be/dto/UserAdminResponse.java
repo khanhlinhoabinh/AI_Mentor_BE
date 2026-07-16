@@ -25,4 +25,13 @@ public class UserAdminResponse {
 
     private Timestamp lastLogin;
 
+    private String avatarUrl;
+
+    private Long totalSubjects;
+
+    private Long totalDocuments;
+
+    private Long totalQuizSets;
+
+    private Long totalFlashcardSets;
 }

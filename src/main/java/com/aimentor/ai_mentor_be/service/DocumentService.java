@@ -35,6 +35,7 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final SubjectRepository subjectRepository;
     private final PdfAnnotationRepository annotationRepository;
+    private final ActivityLogService activityLogService;
 
     @Value("${upload.path}")
     private String uploadPath;
@@ -84,6 +85,8 @@ public class DocumentService {
                 .build();
 
         return mapToResponse(documentRepository.save(document));
+
+
     }
 
     // ===================== GET LIST =====================
