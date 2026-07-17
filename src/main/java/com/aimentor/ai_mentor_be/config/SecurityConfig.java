@@ -49,6 +49,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/quiz/**").authenticated()
 
+                        .requestMatchers("/api/streaks/**").authenticated()
+
                         .requestMatchers("/api/chat/**").authenticated()
 
                         .requestMatchers("/api/reminders/**").authenticated()
