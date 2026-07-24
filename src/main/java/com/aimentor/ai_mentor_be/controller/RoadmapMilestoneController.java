@@ -2,6 +2,7 @@ package com.aimentor.ai_mentor_be.controller;
 
 import com.aimentor.ai_mentor_be.dto.CreateMilestoneRequest;
 import com.aimentor.ai_mentor_be.dto.RoadmapMilestoneResponse;
+import com.aimentor.ai_mentor_be.dto.UpdateMilestoneStatusRequest;
 import com.aimentor.ai_mentor_be.entity.User;
 import com.aimentor.ai_mentor_be.service.RoadmapMilestoneService;
 
@@ -61,6 +62,29 @@ public class RoadmapMilestoneController {
                 service.getMilestonesByTask(
                         user.getUserId(),   // <-- thiếu tham số này
                         taskId
+                )
+        );
+    }
+    // MỚI: cập nhật status milestone (NOT_STARTED / IN_PROGRESS / COMPLETED)
+    @PatchMapping("/{milestoneId}/status")
+    public ResponseEntity<RoadmapMilestoneResponse>
+    updateStatus(
+            @PathVariable Long milestoneId,
+            @RequestBody UpdateMilestoneStatusRequest request
+    ) {
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        User user =
+                (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                service.updateStatus(
+                        user.getUserId(),
+                        milestoneId,
+                        request.getStatus()
                 )
         );
     }

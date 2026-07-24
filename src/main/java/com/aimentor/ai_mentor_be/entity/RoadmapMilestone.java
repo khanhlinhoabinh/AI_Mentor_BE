@@ -29,6 +29,7 @@ public class RoadmapMilestone {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
-    @Column(name = "completed")
-    private Boolean completed;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private RoadmapStatus status;
 }
