@@ -42,7 +42,7 @@ public class RoadmapMilestoneService {
                         .dueDate(
                                 request.getDueDate()
                         )
-                        .completed(false)
+                        .status(RoadmapStatus.NOT_STARTED)
                         .build();
 
         RoadmapMilestone saved =
@@ -72,6 +72,30 @@ public class RoadmapMilestoneService {
                 .toList();
     }
 
+    // MỚI: cập nhật status milestone, có kiểm tra quyền sở hữu
+    public RoadmapMilestoneResponse updateStatus(
+            UUID userId,
+            Long milestoneId,
+            RoadmapStatus status
+    ) {
+
+        RoadmapMilestone milestone =
+                milestoneRepository.findById(milestoneId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Milestone not found"
+                                ));
+
+        verifyOwnership(milestone.getRoadmapTask(), userId);
+
+        milestone.setStatus(status);
+
+        RoadmapMilestone saved =
+                milestoneRepository.save(milestone);
+
+        return mapToResponse(saved);
+    }
+
     private void verifyOwnership(
             RoadmapTask task,
             UUID userId
@@ -97,7 +121,7 @@ public class RoadmapMilestoneService {
                 .taskId(milestone.getRoadmapTask().getTaskId())
                 .milestoneTitle(milestone.getMilestoneTitle())
                 .dueDate(milestone.getDueDate())
-                .completed(milestone.getCompleted())
+                .status(milestone.getStatus())
                 .build();
     }
 }

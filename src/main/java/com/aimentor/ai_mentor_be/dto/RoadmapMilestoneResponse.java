@@ -2,6 +2,7 @@ package com.aimentor.ai_mentor_be.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import com.aimentor.ai_mentor_be.entity.RoadmapStatus;
 
 import java.time.LocalDate;
 
@@ -17,5 +18,5 @@ public class RoadmapMilestoneResponse {
 
     private LocalDate dueDate;
 
-    private Boolean completed;
+    private RoadmapStatus status;
 }
