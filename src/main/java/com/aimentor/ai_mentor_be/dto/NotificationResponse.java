@@ -21,7 +21,7 @@ public class NotificationResponse {
 
     private NotificationType type;
 
-    private UUID referenceId;
+    private String referenceId;
 
     private String referenceType;
 
