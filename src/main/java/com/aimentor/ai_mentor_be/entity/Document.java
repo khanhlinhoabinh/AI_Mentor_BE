@@ -2,7 +2,6 @@ package com.aimentor.ai_mentor_be.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.sql.Timestamp;
 
 @Getter
@@ -45,8 +44,6 @@ public class Document {
     @Column(name = "extracted_text", columnDefinition = "LONGTEXT")
     private String extractedText;
 
-    // ===== 3 FIELDS MỚI =====
-
     @Column(name = "status", length = 20)
     @Builder.Default
     private String status = "UPLOADED";
@@ -57,7 +54,21 @@ public class Document {
     @Column(name = "last_edited_at")
     private Timestamp lastEditedAt;
 
-    // ========================
+    // ===== MODERATION FIELDS =====
+    @Column(name = "moderation_risk_level", length = 20)
+    @Builder.Default
+    private String moderationRiskLevel = "SAFE";
+
+    @Column(name = "has_violation")
+    @Builder.Default
+    private Boolean hasViolation = false;
+
+    @Column(name = "moderation_summary", columnDefinition = "TEXT")
+    private String moderationSummary;
+
+    @Column(name = "moderation_warning", columnDefinition = "TEXT")
+    private String moderationWarning;
+    // ===== END MODERATION FIELDS =====
 
     @Column(name = "created_at")
     private Timestamp createdAt;
@@ -70,10 +81,9 @@ public class Document {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         this.createdAt = now;
         this.updatedAt = now;
-        // Đảm bảo status luôn có giá trị mặc định khi tạo mới
-        if (this.status == null) {
-            this.status = "UPLOADED";
-        }
+        if (this.status == null) this.status = "UPLOADED";
+        if (this.moderationRiskLevel == null) this.moderationRiskLevel = "SAFE";
+        if (this.hasViolation == null) this.hasViolation = false;
     }
 
     @PreUpdate

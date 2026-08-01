@@ -4,6 +4,7 @@ import com.aimentor.ai_mentor_be.entity.Notification;
 import com.aimentor.ai_mentor_be.entity.NotificationStage;
 import com.aimentor.ai_mentor_be.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.aimentor.ai_mentor_be.entity.Role;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,4 +22,5 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
             NotificationStage stage
     );
 
+    List<Notification> findByUserRoleRoleName(String roleName);
 }

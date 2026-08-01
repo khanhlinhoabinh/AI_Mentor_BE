@@ -6,6 +6,7 @@ public enum NotificationType {
 
     ROADMAP,
 
-    AI_MESSAGE
+    AI_MESSAGE,
 
+    DOCUMENT_MODERATION  // ✅ thêm mới — cảnh báo kiểm duyệt tài liệu
 }
