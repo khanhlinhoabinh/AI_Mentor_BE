@@ -34,8 +34,8 @@ public class Notification {
     @Column(nullable = false)
     private NotificationType type;
 
-    @Column(name = "reference_id")
-    private UUID referenceId;
+    @Column(name = "reference_id", length = 100)
+    private String referenceId;
 
     @Column(name = "reference_type", length = 50)
     private String referenceType;
@@ -49,6 +49,4 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationStage stage;
-
-
 }

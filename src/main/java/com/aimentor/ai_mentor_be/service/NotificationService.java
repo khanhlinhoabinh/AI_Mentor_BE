@@ -45,7 +45,7 @@ public class NotificationService {
             String title,
             String content,
             NotificationType type,
-            UUID referenceId,
+            String referenceId,
             String referenceType,
             NotificationStage stage
     ) {
