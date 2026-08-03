@@ -26,4 +26,9 @@ public class DocumentResponse {
 
     private Timestamp createdAt;
     private Timestamp updatedAt;
+
+    private String moderationRiskLevel;
+    private Boolean hasViolation;
+    private String moderationSummary;
+    private String moderationWarning;
 }

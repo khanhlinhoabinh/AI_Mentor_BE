@@ -43,7 +43,7 @@ public class SecurityConfig {
                         // ================= ADMIN =================
 
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
+                        .requestMatchers("/api/subjects/*/documents/admin/**").hasRole("ADMIN")
 
                         // ================= AUTHENTICATED =================
 

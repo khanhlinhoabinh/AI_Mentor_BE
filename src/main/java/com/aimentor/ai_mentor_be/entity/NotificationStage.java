@@ -14,6 +14,7 @@ public enum NotificationStage {
 
     MILESTONE_OVERDUE_1,
 
-    MILESTONE_OVERDUE_2
+    MILESTONE_OVERDUE_2,
 
+    MODERATION_WARNING  // ✅ thêm mới — cảnh báo vi phạm
 }

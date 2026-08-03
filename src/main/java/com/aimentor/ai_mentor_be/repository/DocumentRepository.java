@@ -26,4 +26,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     long countByUploadedBy(User user);
     long countByCreatedAtAfter(Timestamp time);
 
+    // Lấy tất cả tài liệu có vi phạm
+    List<Document> findByHasViolationTrueOrderByCreatedAtDesc();
 }

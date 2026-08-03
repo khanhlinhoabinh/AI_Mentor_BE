@@ -130,4 +130,10 @@ public class DocumentController {
                 documentService.createEmptyDocument(
                         getCurrentUser(), subjectId, request));
     }
+    // ✅ ADMIN: Lấy danh sách tài liệu bị cảnh báo
+    @GetMapping("/admin/flagged")
+    public ResponseEntity<List<DocumentResponse>> getFlaggedDocuments() {
+        return ResponseEntity.ok(
+                documentService.getFlaggedDocuments());
+    }
 }
