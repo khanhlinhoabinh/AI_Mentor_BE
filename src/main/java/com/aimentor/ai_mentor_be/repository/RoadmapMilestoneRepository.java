@@ -3,6 +3,7 @@ package com.aimentor.ai_mentor_be.repository;
 import com.aimentor.ai_mentor_be.entity.RoadmapMilestone;
 import com.aimentor.ai_mentor_be.entity.RoadmapTask;
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.aimentor.ai_mentor_be.entity.RoadmapStatus;
 
 import java.util.List;
 
@@ -11,5 +12,8 @@ public interface RoadmapMilestoneRepository
 
     List<RoadmapMilestone> findByRoadmapTask(
             RoadmapTask roadmapTask
+    );
+    List<RoadmapMilestone> findByStatusNot(
+            RoadmapStatus status
     );
 }
