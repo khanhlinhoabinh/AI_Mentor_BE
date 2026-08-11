@@ -136,4 +136,5 @@ public class DocumentController {
         return ResponseEntity.ok(
                 documentService.getFlaggedDocuments());
     }
+
 }
