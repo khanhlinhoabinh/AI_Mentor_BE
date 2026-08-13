@@ -1,5 +1,6 @@
 package com.aimentor.ai_mentor_be.controller;
 
+import com.aimentor.ai_mentor_be.dto.LeaderboardResponse;
 import com.aimentor.ai_mentor_be.dto.StreakResponse;
 import com.aimentor.ai_mentor_be.entity.User;
 import com.aimentor.ai_mentor_be.service.StreakService;
@@ -35,6 +36,14 @@ public class StreakController {
     public ResponseEntity<StreakResponse> checkIn() {
         return ResponseEntity.ok(
                 streakService.checkIn(getCurrentUser())
+        );
+    }
+
+    // Bảng xếp hạng — Top 50 chuỗi kỷ lục cao nhất
+    @GetMapping("/leaderboard")
+    public ResponseEntity<LeaderboardResponse> getLeaderboard() {
+        return ResponseEntity.ok(
+                streakService.getLeaderboard(getCurrentUser())
         );
     }
 }

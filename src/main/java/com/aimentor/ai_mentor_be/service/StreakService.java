@@ -1,15 +1,18 @@
 package com.aimentor.ai_mentor_be.service;
 
+import com.aimentor.ai_mentor_be.dto.LeaderboardResponse;
 import com.aimentor.ai_mentor_be.dto.StreakResponse;
 import com.aimentor.ai_mentor_be.entity.User;
 import com.aimentor.ai_mentor_be.entity.UserStreak;
 import com.aimentor.ai_mentor_be.repository.UserStreakRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -34,6 +37,9 @@ public class StreakService {
     private static final String BADGE_1_ICON  = "🐝";
     private static final String BADGE_2_ICON  = "⭐";
     private static final String BADGE_3_ICON  = "🏆";
+
+    // Số người tối đa hiển thị trên bảng xếp hạng
+    private static final int LEADERBOARD_SIZE = 50;
 
     // ═══════════════════════════════════════
     // ĐIỂM DANH
@@ -70,9 +76,10 @@ public class StreakService {
             streak.setCurrentStreak(1);
         }
 
-        // Cập nhật kỷ lục dài nhất
+        // Cập nhật kỷ lục dài nhất + THỜI ĐIỂM đạt kỷ lục (dùng để xếp hạng khi hoà điểm)
         if (streak.getCurrentStreak() > streak.getLongestStreak()) {
             streak.setLongestStreak(streak.getCurrentStreak());
+            streak.setLongestStreakAt(now);
         }
 
         streak.setLastCheckInDate(today);
@@ -108,9 +115,6 @@ public class StreakService {
                 && !checkedInToday
                 && !today.minusDays(1).equals(streak.getLastCheckInDate())) {
 
-            // Chuỗi đã bị vỡ từ hôm qua trở về trước
-            // currentStreak vẫn giữ trong DB cho đến khi user điểm danh lại
-            // nhưng FE sẽ hiển thị là 0 (chuỗi bị reset)
             UserStreak display = UserStreak.builder()
                     .user(currentUser)
                     .currentStreak(0)
@@ -127,13 +131,56 @@ public class StreakService {
     }
 
     // ═══════════════════════════════════════
+    // BẢNG XẾP HẠNG (Top 50 + hạng của chính user hiện tại)
+    // ═══════════════════════════════════════
+    public LeaderboardResponse getLeaderboard(User currentUser) {
+
+        List<UserStreak> top = userStreakRepository.findTopStreaks(PageRequest.of(0, LEADERBOARD_SIZE));
+
+        List<LeaderboardResponse.LeaderboardEntry> entries = new ArrayList<>();
+        for (int i = 0; i < top.size(); i++) {
+            UserStreak us = top.get(i);
+            entries.add(LeaderboardResponse.LeaderboardEntry.builder()
+                    .rank(i + 1)
+                    .userId(us.getUser().getUserId().toString())
+                    .fullName(us.getUser().getFullName())
+                    .avatarUrl(us.getUser().getAvatarUrl())
+                    .longestStreak(us.getLongestStreak())
+                    .currentStreak(us.getCurrentStreak())
+                    .achievedAt(us.getLongestStreakAt())
+                    .isCurrentUser(us.getUser().getUserId().equals(currentUser.getUserId()))
+                    .build());
+        }
+
+        // Tính hạng thật của user hiện tại, kể cả khi họ KHÔNG nằm trong top 50
+        UserStreak myStreak = userStreakRepository.findByUser(currentUser).orElse(null);
+        Integer myRank = null;
+        Integer myLongestStreak = 0;
+
+        if (myStreak != null && myStreak.getLongestStreak() != null && myStreak.getLongestStreak() > 0) {
+            myLongestStreak = myStreak.getLongestStreak();
+            long betterCount = userStreakRepository.countBetterThan(
+                    myStreak.getLongestStreak(), myStreak.getLongestStreakAt());
+            myRank = (int) betterCount + 1;
+        }
+
+        long totalRanked = userStreakRepository.countByLongestStreakGreaterThan(0);
+
+        return LeaderboardResponse.builder()
+                .topUsers(entries)
+                .myRank(myRank)
+                .myLongestStreak(myLongestStreak)
+                .totalRankedUsers(totalRanked)
+                .build();
+    }
+
+    // ═══════════════════════════════════════
     // PRIVATE: Build response + tính danh hiệu động
     // ═══════════════════════════════════════
     private StreakResponse mapToResponse(UserStreak streak, boolean checkedInToday) {
 
         int days = streak.getCurrentStreak();
 
-        // Tính danh hiệu cao nhất hiện tại
         String badgeTitle = null;
         String badgeIcon  = null;
         String badgeLevel = "NONE";
@@ -152,7 +199,6 @@ public class StreakService {
             badgeLevel = "BRONZE";
         }
 
-        // Danh sách tất cả danh hiệu
         List<StreakResponse.BadgeInfo> badges = List.of(
                 StreakResponse.BadgeInfo.builder()
                         .title(BADGE_1_TITLE)

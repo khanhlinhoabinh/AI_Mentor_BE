@@ -33,6 +33,11 @@ public class UserStreak {
     @Builder.Default
     private Integer longestStreak = 0;
 
+    // Thời điểm đạt được kỷ lục "longestStreak" hiện tại
+    // → dùng để xếp hạng: cùng điểm thì ai đạt TRƯỚC (thời gian nhỏ hơn) xếp trên
+    @Column(name = "longest_streak_at")
+    private LocalDateTime longestStreakAt;
+
     // Ngày điểm danh gần nhất (chỉ lưu ngày, không lưu giờ)
     @Column(name = "last_check_in_date")
     private LocalDate lastCheckInDate;
