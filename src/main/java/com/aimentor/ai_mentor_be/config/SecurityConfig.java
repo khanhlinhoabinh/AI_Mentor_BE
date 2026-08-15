@@ -52,6 +52,10 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/streaks/**").authenticated()
 
+                        // ✅ MỚI — tính năng đánh giá học tập AI
+                        .requestMatchers("/api/learning-activity/**").hasRole("USER")
+                        .requestMatchers("/api/learning-evaluation/**").hasRole("USER")
+
                         .requestMatchers("/api/chat/**").authenticated()
 
                         .requestMatchers("/api/reminders/**").authenticated()
