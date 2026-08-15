@@ -279,11 +279,9 @@ public class QuizService {
                         / questions.size()
                         * 100;
 
-        quizAttemptRepository
-                .findTopByQuizSetAndUserOrderByAttemptedAtDesc(
-                        quizSet,
-                        currentUser)
-                .ifPresent(quizAttemptRepository::delete);
+        // KHÔNG xóa attempt cũ.
+        // Tính năng đánh giá học tập cần lịch sử nhiều lần làm quiz
+        // để tính xu hướng, điểm trung bình và mức cải thiện theo thời gian.
 
         QuizAttempt attempt =
                 QuizAttempt.builder()
