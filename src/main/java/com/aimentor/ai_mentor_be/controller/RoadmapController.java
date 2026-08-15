@@ -10,6 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.aimentor.ai_mentor_be.dto.AiRoadmapStageSuggestion;
+import com.aimentor.ai_mentor_be.dto.AiRoadmapSuggestionRequest;
+import com.aimentor.ai_mentor_be.service.AiRoadmapService;
 
 import java.util.List;
 
@@ -19,6 +22,8 @@ import java.util.List;
 public class RoadmapController {
 
     private final RoadmapService roadmapService;
+
+    private final AiRoadmapService aiRoadmapService;
 
     @PostMapping
     public ResponseEntity<RoadmapResponse>
@@ -150,6 +155,28 @@ public class RoadmapController {
                 roadmapService.startRoadmap(
                         user.getUserId(),
                         roadmapId
+                )
+        );
+    }@PostMapping("/{roadmapId}/ai-suggest-stages")
+    public ResponseEntity<List<AiRoadmapStageSuggestion>>
+    suggestRoadmapStages(
+                    @PathVariable Long roadmapId,
+                    @RequestBody AiRoadmapSuggestionRequest request
+            ) {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        User user =
+                (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                aiRoadmapService.suggestStages(
+                        user.getUserId(),
+                        roadmapId,
+                        request
                 )
         );
     }
